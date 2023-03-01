@@ -1,0 +1,52 @@
+---
+title: "NMFS repos"
+format: html
+---
+
+```{r include=FALSE}
+orgs <- c("nwfsc-math-bio", "nmfs-stock-synthesis", "pfmc-assessments", "NOAA-EDAB")
+```
+
+```{r include=FALSE}
+library(dplyr)
+tbl <- c()
+for(org in orgs){
+url <- paste0("https://api.github.com/search/repositories?q=org:", org)
+res <- httr::GET(url)
+dat <- jsonlite::fromJSON(rawToChar(res$content))$items
+dat$org <- org
+dat$license_name = select(dat$license, "spdx_id")$spdx_id
+dat <- dat %>% arrange(desc(pushed_at)) %>% 
+  mutate(last_update = as.Date(pushed_at, "%Y-%m-%d"),
+         topic = ifelse(is.null(unlist(topics)), "", unlist(topics))) %>%
+  select(c("org", "name", "language", "last_update", "license_name", "description", "topic"))
+tbl <- rbind(tbl, dat)
+}
+```
+
+```{r echo=FALSE}
+library(reactable)
+tbl$type <- ""
+for(i in c("R package", "Shiny app", " data package")){
+  has_val <- stringr::str_detect(tolower(tbl$description), tolower(i))
+  tbl$type[has_val] <- i
+}
+tbl %>% arrange(desc(last_update)) %>%
+  select(c("org", "name", "type", "language", "last_update", "description")) %>%
+  reactable(filterable = TRUE, striped=TRUE,
+            columns = list(
+    description = colDef(width = 300)))
+```
+
+<!--
+If I wanted to add some badges
+
+![GitHub contributors](https://img.shields.io/github/contributors/org/repo)
+
+/github/release-date
+
+/github/license
+
+[![date](https://img.shields.io/github/last-commit/org/repo)](https://github.com/org/repo/commits/main)
+
+-->
