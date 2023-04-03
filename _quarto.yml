@@ -4,6 +4,12 @@ project:
 
 website:
   title: "today"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: table.qmd
+        text: Table
 
 format:
   html:
