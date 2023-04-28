@@ -2,6 +2,8 @@
 
 A toy example of getting a list of NMFS repos.
 
+An infinitely better version of this same idea of using the GitHub API is here https://github.com/nmfs-fish-tools/status . See the [gh-repo-info.R](https://github.com/nmfs-fish-tools/status/blob/main/gh-repo-info.R) file. Forked from https://github.com/espinielli/status
+
 <hr>
 
 ## Disclaimer
