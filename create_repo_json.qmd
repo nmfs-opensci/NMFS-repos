@@ -1,5 +1,5 @@
 ---
-title: "NMFS repos"
+title: "NMFS repo json"
 format: html
 ---
 
@@ -9,55 +9,38 @@ library(gt)
 load("gitdata.rda")
 ```
 
-```{r eval=FALSE}
+```{r}
 url <- "https://api.github.com/rate_limit"
 res <- httr::GET(url,
                  httr::add_headers(Authorization = "token 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"))
 res
 ```
 
-```{r eval=FALSE}
-non.ent.orgs <- c("noaa-fisheries-integrated-toolbox", "nmfs-fish-tools", "noaa-fims",
-          "noaa-iea", "ecosystem-state", "futureseas",
-          "pfmc-assessments", "pacific-hake", "nmfs-stock-synthesis", "r4ss", "ss3sim",
-          "nwfsc-math-bio", "nwfsc-fram", "NOAA-FEAT", "nwfsc-cb", "NWFSC-OA-lab", "TIDE-NWFSC",
-          "rverse-tutorials", "nmfs-opensci",
-          "NOAA-EDAB", "PIFSCstockassessments",
-          "afsc-assessments", "NMML", "afsc-gap-products", "afsc-ecofoci", "alaska-groundfish-efh",
-          "us-amlr", "noaa-garfo"
-          )
-ent.orgs <- c("NEFSC", "SEFSC", "SWFSC", "PIFSC-NMFS-NOAA")
-```
-
-Make a fine grained PAT.
 
 https://api.github.com/orgs/ORG/repos
 
-```{r eval=FALSE}
+```{r}
 # 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
 library(dplyr)
-orgtabs <- list()
-for(tab_type in c("non.ent.orgs", "ent.orgs")){
-  orgnames <- get(tab_type)
-  tbl <- list()
-  update_tbl <- FALSE
-for(org in orgnames[which(!(orgnames %in% names(tbl)))]){
-    update_tbl <- TRUE
+tbl <- list()
+for(org in c(get("non.ent.orgs"), get("ent.orgs"))){
 url <- paste0("https://api.github.com/orgs/", org, "/repos?per_page=100")
 res <- httr::GET(url,
                  httr::add_headers(authorization = "token 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"))
-dat <- jsonlite::fromJSON(rawToChar(res$content))
-dat$org <- org
-dat$license_name = ifelse(inherits(dat$license, "logical"), NA, select(dat$license, "spdx_id")$spdx_id)[1]
-tbl[[org]] <- dat
+tbl[[org]] <- res$content
 cat(org, " ")
-}
-if(update_tbl) orgtabs[[tab_type]] <- tbl
 }
 ```
 
+```{r}
+tbl_big <- lapply(tbl, function(x){jsonlite::fromJSON(rawToChar(x))})
+tbl_big <- jsonlite::rbind_pages(tbl_big)
+repo_json <- jsonlite::toJSON(tbl_big, pretty = TRUE)
+cat(repo_json, file="code.json")
+```
 
-```{r eval=FALSE}
+
+```{r}
 # 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
 library(dplyr)
 orgtabs <- list()

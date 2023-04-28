@@ -1,22 +1,21 @@
 ---
-title: "NMFS repos"
+title: "Create gitdata for NMFS GitHub ecosystem"
 format: html
 ---
 
 ```{r include=FALSE}
 library(dplyr)
-library(gt)
-load("gitdata.rda")
+knitr::opts_chunk$set(eval = FALSE)
 ```
 
-```{r eval=FALSE}
+```{r}
 url <- "https://api.github.com/rate_limit"
 res <- httr::GET(url,
                  httr::add_headers(Authorization = "token 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"))
 res
 ```
 
-```{r eval=FALSE}
+```{r}
 non.ent.orgs <- c("noaa-fisheries-integrated-toolbox", "nmfs-fish-tools", "noaa-fims",
           "noaa-iea", "ecosystem-state", "futureseas",
           "pfmc-assessments", "pacific-hake", "nmfs-stock-synthesis", "r4ss", "ss3sim",
@@ -33,7 +32,7 @@ Make a fine grained PAT.
 
 https://api.github.com/orgs/ORG/repos
 
-```{r eval=FALSE}
+```{r}
 # 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
 library(dplyr)
 orgtabs <- list()
@@ -57,7 +56,7 @@ if(update_tbl) orgtabs[[tab_type]] <- tbl
 ```
 
 
-```{r eval=FALSE}
+```{r}
 # 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
 library(dplyr)
 orgtabs <- list()
@@ -78,10 +77,6 @@ tbl[[org]] <- dat
 if(update_tbl) orgtabs[[tab_type]] <- tbl
 }
 ```
-
-dat \<- dat %\>% arrange(desc(pushed_at)) %\>% mutate(last_update = as.Date(pushed_at, "%Y-%m-%d"), topic = ifelse(is.null(unlist(topics)), "", unlist(topics))) %\>% select(c("org", "name", "language", "last_update", "license_name", "description", "topic"))
-
-Make a table of the total number of repos.
 
 ```{r}
 tmptbl <- list()
@@ -113,7 +108,7 @@ nrepos_by_type <- org.df %>% group_by(type) %>%
   arrange(desc(updated_2023_2022))
 ```
 
-```{r eval=FALSE}
+```{r}
 userdat <- read.csv("usernames_nmfs_rug.csv")
 usernames_rug <- userdat$GitHub.username[userdat$GitHub.username != ""]
 userdat <- read.csv("usernames_other_noaa.csv")
@@ -121,7 +116,7 @@ usernames_noaa <- c(usernames_rug, userdat$username[userdat$username != ""])
 usernames_noaa <- stringr::str_trim(usernames_noaa)
 ```
 
-```{r eval=FALSE}
+```{r}
 #https://api.github.com/repos/NOAA-FIMS/FIMS/contributors
 # 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
 library(dplyr)
@@ -146,7 +141,7 @@ df.repo <- rbind(df.repo, dat)
 contributortabs <- tbl
 ```
 
-```{r eval=FALSE}
+```{r}
 df.contributors <- bind_rows(contributortabs)  %>% 
   group_by(login) %>% 
   summarize(nrepos = length(login),
@@ -155,7 +150,7 @@ df.contributors <- bind_rows(contributortabs)  %>%
 usernames_orgs <- df.contributors$login[!(df.contributors$login %in% usernames)]
 ```
 
-```{r eval=FALSE}
+```{r}
 usernames_all <- c(usernames_noaa, usernames_orgs)
 usernames_all <- unique(usernames_all)
 
@@ -177,7 +172,7 @@ usernames_not_noaa <- read.csv("usernames_not_noaa.csv")$username
 # sort(usernames_all[!(usernames_all %in% usernames_noaa) & !(usernames_all %in% usernames_not_noaa)])
 ```
 
-```{r eval=FALSE}
+```{r}
 # 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
 library(dplyr)
 tbl <- list()
@@ -197,7 +192,7 @@ cat(username, " ")
 userrepotabs <- tbl
 ```
 
-```{r eval=FALSE}
+```{r}
 # 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
 library(dplyr)
 # tbl <- list()
@@ -214,66 +209,5 @@ usertabs <- tbl
 ```
 
 ```{r}
-df.user <- bind_rows(usertabs, .id = "username")  %>% 
-  subset(username %in% usernames_noaa) %>%
-  summarize(nrepos = sum(public_repos, na.rm=TRUE))
-```
-
-## Make the tables
-
-```{r}
-library(gt)
-nrepos_by_org %>% ungroup() %>% gt() %>%
-  #   tab_style(
-  #   style = cell_fill(color = "lightblue"),
-  #   locations = cells_body(rows = type=="Enterprise GH org")
-  # ) %>%
-   cols_label(
-    nrepos = html("Num<br>Repos"),
-    updated_2023_2022 = html("Updated in<br>2023-2022"),
-    updated_2021_2020 = html("Updated in<br>2021-2020")
-  ) %>%
-  cols_hide(columns = c(type)) %>%
-  cols_align(
-    align = "center",
-    columns = c(nrepos, updated_2023_2022, updated_2021_2020)
-  )
-```
-
-
-```{r}
-library(gt)
-tmp <- bind_rows(userrepotabs, .id = "username")  %>% 
-  subset(username %in% usernames_noaa) %>%
-  mutate(type="Individual account") %>%
-  group_by(type) %>% 
-  summarize(n = length(unique(username)),
-            nrepos = length(name),
-            updated_2023_2022 = sum(lubridate::year(updated_at) %in% c("2023", "2022"), na.rm=TRUE),
-            updated_2021_2020 = sum(lubridate::year(updated_at) %in% c("2021", "2020"), na.rm=TRUE))
-bind_rows(nrepos_by_type, tmp) %>% 
-  ungroup() %>% gt() %>%
-    tab_style(
-    style = cell_fill(color = "lightgrey"),
-    locations = cells_body(rows = type=="Individual account")
-  ) %>%
-   cols_label(
-    nrepos = html("Num<br>Repos"),
-    updated_2023_2022 = html("Updated in<br>2023-2022"),
-    updated_2021_2020 = html("Updated in<br>2021-2020")
-  ) %>%
-  cols_align(
-    align = "center",
-    columns = c(nrepos, updated_2023_2022, updated_2021_2020)
-  )  %>%
-  tab_header(
-    title = md(paste("Public NMFS Repositories on GitHub", Sys.Date())),
-    subtitle = md("non-Enterprise GH orgs, Enterprise GH orgs, work personal accounts")
-  ) %>%
-    tab_source_note(
-    source_note = "GH org = GitHub organization. It is like a GitHub account where groups of GitHub users collaborate on a collection of repositories and manage those repositories."
-  ) %>%
-    tab_source_note(
-    source_note = "Note: the vast majority of repos on individual accounts are 'sandboxy' in nature and are not products per se."
-  )
+save(non.ent.orgs, ent.orgs, usertabs, orgtabs, contributortabs, userrepotabs, usernames_noaa, usernames_all, file="gitdata.rda")
 ```
